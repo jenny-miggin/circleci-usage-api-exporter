@@ -1,0 +1,34 @@
+version: 2.1
+
+jobs:
+  generate-usage-report:
+    docker:
+      - image: cimg/python:3.13.1
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            pip3 install requests pandas matplotlib
+      - run:
+          environment:
+            START_DATE: "2024-12-01"
+            END_DATE: "2024-12-15"
+            ORG_ID: $CIRCLE_ORGANIZATION_ID
+          name: Get Usage Report
+          command: |
+            python ./src/get_usage_report.py
+      - run:
+          name: Merge multiple csv files together and do some sorting 
+          command: |
+            python ./src/merge.py
+      - store_artifacts:
+          path: /tmp/reports
+
+workflows:
+  use-usage-api:
+    jobs:
+      - generate-usage-report:
+          context:
+            - my-context
